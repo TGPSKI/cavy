@@ -1,4 +1,4 @@
-import {has, omit} from 'lodash';
+import { has, omit } from 'lodash';
 
 // Internal: Wrapper around an app being tested, and a bunch of test cases.
 //
@@ -13,32 +13,14 @@ class ComponentNotFoundError extends Error {
 }
 
 export default class TestScope {
-
-<<<<<<< HEAD
-  constructor(component, waitTime, startDelay) {
-||||||| parent of be86b0d... TestScope: add testOptions prop, logging functions, suite definitions, define expected test result per spec
-  constructor(component, waitTime) {
-=======
   constructor(component, testOptions) {
->>>>>>> be86b0d... TestScope: add testOptions prop, logging functions, suite definitions, define expected test result per spec
     this.component = component;
     this.testHooks = component.testHookStore;
-<<<<<<< HEAD
-
-    this.testCases = [];
-
-    this.waitTime = waitTime;
-    this.startDelay = startDelay;
-||||||| parent of be86b0d... TestScope: add testOptions prop, logging functions, suite definitions, define expected test result per spec
-    this.testCases = [];
-    this.waitTime = waitTime;
-=======
     this.testSuites = {};
 
     this.waitTime = testOptions.waitTime;
     this.testStartDelay = testOptions.testStartDelay;
     this.consoleLog = testOptions.consoleLog;
->>>>>>> be86b0d... TestScope: add testOptions prop, logging functions, suite definitions, define expected test result per spec
 
     this.run.bind(this);
   }
@@ -48,31 +30,6 @@ export default class TestScope {
   // after each test case by changing the component key to force React to
   // re-render the entire component tree.
   async run() {
-<<<<<<< HEAD
-    if (this.startDelay) {
-      await this.pause(this.startDelay);
-    }
-    
-    const start = new Date();
-    console.log(`Cavy test suite started at ${start}.`);
-
-    for (let i = 0; i < this.testCases.length; i++) {
-      let {description, f} = this.testCases[i];
-      try {
-        await f.call(this);
-        console.log(`${description}  ✅`);
-      } catch (e) {
-        console.warn(`${description}  ❌\n   ${e.message}`);
-||||||| parent of be86b0d... TestScope: add testOptions prop, logging functions, suite definitions, define expected test result per spec
-    for (let i = 0; i < this.testCases.length; i++) {
-      let {description, f} = this.testCases[i];
-      try {
-        await f.call(this);
-        console.log(`${description}  ✅`);
-      } catch (e) {
-        console.warn(`${description}  ❌\n   ${e.message}`);
-=======
-
     let start = new Date();
     this._handleConsoleLog('Cavy tests started at ' + start);
 
@@ -94,26 +51,30 @@ export default class TestScope {
         let caseStats = {};
         let caseResult = {};
 
-        let {expected, f} = testCase;
+        let { expected, f } = testCase;
         let description = caseKeys[testCaseIdx];
 
         try {
           caseStats.start = new Date();
           await f.call(this);
           caseStats.finish = new Date();
-          
+
           let actual = 'PASS';
 
           if (expected === actual) {
             this._handleConsoleLog(this._handlePass(description, expected, actual));
-            
+
             caseResult = {
               expected: expected,
               actual: actual
             };
           } else {
             let error = 'Expected result not equivalent to actual result.';
-            this._handleConsoleLog(this._handleFail(description, expected, actual, error), false, true);
+            this._handleConsoleLog(
+              this._handleFail(description, expected, actual, error),
+              false,
+              true
+            );
 
             caseResult = {
               expected: expected,
@@ -121,7 +82,6 @@ export default class TestScope {
               error: error
             };
           }
-          
         } catch (e) {
           caseStats.finish = new Date();
 
@@ -134,7 +94,11 @@ export default class TestScope {
               actual: actual
             };
           } else {
-            this._handleConsoleLog(this._handleFail(description, expected, actual, e.message), false, true);
+            this._handleConsoleLog(
+              this._handleFail(description, expected, actual, e.message),
+              false,
+              true
+            );
             caseResult = {
               expected: expected,
               actual: actual,
@@ -143,23 +107,22 @@ export default class TestScope {
           }
         }
 
-        caseStats.duration = (caseStats.finish - caseStats.start)/1000;
+        caseStats.duration = (caseStats.finish - caseStats.start) / 1000;
 
         let noF = omit(testCase, 'f');
-        testSuite[caseKeys[testCaseIdx]] = {...noF, ...caseStats, ...caseResult};
+        testSuite[caseKeys[testCaseIdx]] = { ...noF, ...caseStats, ...caseResult };
 
-        this._handleConsoleLog({description, caseStats}, true);
->>>>>>> be86b0d... TestScope: add testOptions prop, logging functions, suite definitions, define expected test result per spec
+        this._handleConsoleLog({ description, caseStats }, true);
       }
 
       suiteStats.stop = new Date();
-      suiteStats.duration = (suiteStats.stop - suiteStats.start)/1000;
+      suiteStats.duration = (suiteStats.stop - suiteStats.start) / 1000;
 
       await this.component.clearAsync();
       this.component.reRender();
 
       this._handleConsoleLog('Suite stopped at ' + suiteStats.stop);
-      this._handleConsoleLog({suiteStats}, true);
+      this._handleConsoleLog({ suiteStats }, true);
     }
 
     let finish = new Date();
@@ -176,35 +139,31 @@ export default class TestScope {
   //              true - logging
   //              verbose - log all
   // warn    - Use console.warn instead of console.log
-  _handleConsoleLog(log, verbose=false, warn=false) {
+  _handleConsoleLog(log, verbose = false, warn = false) {
     if (this.consoleLog) {
       if (verbose) {
         switch (this.consoleLog) {
-        case 'verbose':
-          if (warn) {
-            console.warn(log);
-          } else {
-            console.log(log);
-          }
-          break;
-        default:
-          break;
+          case 'verbose':
+            if (warn) {
+              console.warn(log);
+            } else {
+              console.log(log);
+            }
+            break;
+          default:
+            break;
         }
       } else {
         switch (warn) {
-        case true:
-          console.warn(log);
-          break;
-        case false:
-          console.log(log);
-          break;
+          case true:
+            console.warn(log);
+            break;
+          case false:
+            console.log(log);
+            break;
         }
       }
     }
-
-    const stop = new Date();
-    const duration = (stop - start) / 1000;
-    console.log(`Cavy test suite stopped at ${stop}, duration: ${duration} seconds.`);
   }
 
   // Internal: Handle pass test case logging string generation
@@ -213,7 +172,7 @@ export default class TestScope {
   // expected  - String, expected test result, one of 'PASS', 'FAIL'
   // actual    - String, actual test result, one of 'PASS', 'FAIL'
   _handlePass(description, expected, actual) {
-    return `${description}  ✅\n    Expected: ${expected}\n    Actual: ${actual}`
+    return `${description}  ✅\n    Expected: ${expected}\n    Actual: ${actual}`;
   }
 
   // Internal: Handle pass test case logging string generation
@@ -223,7 +182,7 @@ export default class TestScope {
   // actual    - String, actual test result, one of 'PASS', 'FAIL'
   // error     - String, error message
   _handleFail(description, expected, actual, error) {
-    return `${description}  ❌\n    Expected: ${expected}\n    Actual: ${actual}\n    Error: ${error}`
+    return `${description}  ❌\n    Expected: ${expected}\n    Actual: ${actual}\n    Error: ${error}`;
   }
 
   // Public: Find a component by its test hook identifier. Waits
@@ -254,7 +213,9 @@ export default class TestScope {
           return resolve(component);
         } else {
           if (Date.now() - startTime >= this.waitTime) {
-            reject(new ComponentNotFoundError(`Could not find component with identifier ${identifier}`));
+            reject(
+              new ComponentNotFoundError(`Could not find component with identifier ${identifier}`)
+            );
             clearInterval(loop);
           }
         }
@@ -302,7 +263,7 @@ export default class TestScope {
   }
 
   // Public: Define expected result from test spec. Adds the test description as a key
-  //         to the testSuite, with an object containing the expected result and callback as 
+  //         to the testSuite, with an object containing the expected result and callback as
   //         values.
   //
   // expected - Expected result from the test.
@@ -310,7 +271,7 @@ export default class TestScope {
   //
   // See example above.
   it(expected, f) {
-    this.testSuites[this.activeSuiteKey][this.describeLabel] = {expected, f};
+    this.testSuites[this.activeSuiteKey][this.describeLabel] = { expected, f };
   }
 
   // Public: Fill in a `TextInput`-compatible component with a string value.
@@ -322,7 +283,7 @@ export default class TestScope {
   // Returns a promise, use await when calling this function. Promise will be
   // rejected if the component is not found.
   async fillIn(identifier, str) {
-    const component =  await this.findComponent(identifier);
+    const component = await this.findComponent(identifier);
     component.props.onChangeText(str);
   }
 
@@ -373,7 +334,7 @@ export default class TestScope {
   async notExists(identifier) {
     try {
       await this.findComponent(identifier);
-    } catch(e) {
+    } catch (e) {
       if (e.name == 'ComponentNotFoundError') {
         return true;
       }
