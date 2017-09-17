@@ -5,9 +5,7 @@ import { AsyncStorage } from 'react-native';
 import TestHookStore from './TestHookStore';
 import TestScope from './TestScope';
 
-import {
-  View
-} from 'react-native';
+import { View } from 'react-native';
 
 // Public: Wrap your entire app in Tester to run tests against that app,
 // interacting with registered components in your test cases via the Cavy
@@ -36,7 +34,7 @@ import {
 //   if (GLOBAL.TEST_ENABLED) {
 //     var testHookStore = new TestHookStore();
 //     var testSuites = require('./specs/itSuites.js');
-//     var testSuitesArray = [TestSuites.myFeatureSpec, TestSuites.myOtherFeatureSpec]  
+//     var testSuitesArray = [TestSuites.myFeatureSpec, TestSuites.myOtherFeatureSpec]
 //   }
 //
 //   export default class AppWrapper extends React.Component {
@@ -44,8 +42,8 @@ import {
 //     render() {
 //       if (GLOBAL.TEST_ENABLED) {
 //         return (
-//           <Tester 
-//             suites={testSuitesArray} 
+//           <Tester
+//             suites={testSuitesArray}
 //             store={testHookStore}
 //             waitTime={2000}
 //             testStartDelay={1000}
@@ -59,11 +57,10 @@ import {
 //       }
 //     }
 export default class Tester extends Component {
-
   getChildContext() {
     return {
       testHooks: this.testHookStore
-    }
+    };
   }
 
   constructor(props, context) {
@@ -79,7 +76,7 @@ export default class Tester extends Component {
   }
 
   async runTests() {
-    const {suites, waitTime, testStartDelay, consoleLog} = this.props;
+    const { suites, waitTime, testStartDelay, consoleLog } = this.props;
 
     let testOptions = {
       waitTime: waitTime,
@@ -88,7 +85,7 @@ export default class Tester extends Component {
     };
 
     scope = new TestScope(this, testOptions);
-    
+
     for (var i = 0; i < suites.length; i++) {
       await suites[i](scope);
     }
@@ -96,22 +93,22 @@ export default class Tester extends Component {
   }
 
   reRender() {
-    this.setState({key: Math.random()});
+    this.setState({ key: Math.random() });
   }
 
   async clearAsync() {
     if (this.props.clearAsyncStorage) {
       try {
         await AsyncStorage.clear();
-      } catch(e) {
-        console.warn("[Cavy] failed to clear AsyncStorage:", e);
+      } catch (e) {
+        console.warn('[Cavy] failed to clear AsyncStorage:', e);
       }
     }
   }
 
   render() {
     return (
-      <View key={this.state.key} style={{flex: 1}}>
+      <View key={this.state.key} style={{ flex: 1 }}>
         {Children.only(this.props.children)}
       </View>
     );
@@ -129,11 +126,11 @@ Tester.propTypes = {
 
 Tester.childContextTypes = {
   testHooks: PropTypes.instanceOf(TestHookStore)
-}
+};
 
 Tester.defaultProps = {
   waitTime: 2000,
   clearAsyncStorage: false,
   testStartDelay: false,
   consoleLog: true
-}
+};
