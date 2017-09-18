@@ -1,6 +1,6 @@
 import { has, omit } from 'lodash';
 
-import { reporter, postTestResults } from 'reporting/Reporter';
+import { reporter, postTestResults } from './reporting/Reporter';
 
 // Internal: Wrapper around an app being tested, and a bunch of test cases.
 //
