@@ -1,11 +1,8 @@
-# Cavy
-
-[![npm version](https://badge.fury.io/js/cavy.svg)](https://badge.fury.io/js/cavy)
+# Cavy-suites
 
 ![Cavy logo](https://cloud.githubusercontent.com/assets/126989/22546798/6cf18938-e936-11e6-933f-da756b9ee7b8.png)
 
-**Cavy** is a cross-platform integration test framework for React Native, by
-[Pixie Labs](http://pixielabs.io).
+**Cavy-suites** is a cross-platform integration test framework for React Native, forked from Cavy (by [Pixie Labs](http://pixielabs.io)) with additions by [TGPSKI](https://github.com/tgpski). Cavy-suites adds additional functionality to Cavy, including test suites, configurable logging, test reporting, jenkins integration, and redux store support.
 
 ## Table of Contents
 - [How does it work?](#how-does-it-work)
@@ -27,10 +24,14 @@ Cavy (ab)uses React `ref` generating functions to give you the ability to refer
 to, and simulate actions upon, deeply nested components within your
 application. Unlike a tool like [enzyme](https://github.com/airbnb/enzyme)
 which uses a simulated renderer, Cavy runs within your live application as it
-is running on a host device (e.g. your Android or iOS simulator).
+is running on a host device (e.g. your Android or iOS simulator). 
 
 This allows you to do far more accurate integration testing than if you run
 your React app within a simulated rendering environment.
+
+Cavy-suites introduces test suites to Cavy. The user creates low-level spec functions, like pressing a button in the nav bar, or inputting text in a form. Then the developer assembles specs into groups called suites. Each suite will run tests on a specific portion of the app, reusing as much spec code as possible, while enabling flexibility for tests.
+
+Cavy-suites adds integration with redux, giving test specs access to `dispatch()` and `getState()` functions. Developers can create tests that compare the redux state to expected state after interacting with the app. Developers can also dispatch actions to the app reducer, allowing for integration with popular middlewares like [redux-form](https://github.com/erikras/redux-form).
 
 ### Where does it fit in?
 
@@ -57,17 +58,17 @@ Cavy provides 3 tools to let you run integration tests:
 
 ## Installation
 
-To get started using Cavy, install it using `yarn`:
+To get started using Cavy-suites, install it using `yarn`:
 
-    yarn add cavy --dev
+    yarn add -D git://github.com/TGPSKI/cavy.git#tgpski-redux-form
 
 or `npm`:
 
-    npm i --save-dev cavy
+    npm i --save-dev git://github.com/TGPSKI/cavy.git#tgpski-redux-form
 
 ## Basic usage
 
-Check out [the sample app](https://github.com/pixielabs/cavy/tree/master/sample-app/EmployeeDirectory) for example usage. Here it is running:
+Check out [the sample app](https://github.com/tgpski/cavy/tree/tgpski-redux-form/sample-app/EmployeeDirectory) for example usage. Here it is running:
 
 ![Sample app running](https://cloud.githubusercontent.com/assets/126989/22829358/193b5c0a-ef9a-11e6-994e-d4df852a6181.gif)
 
@@ -112,21 +113,73 @@ const TestableScene = hook(Scene);
 export default TestableScene;
 ```
 
-### Write your test cases
+### Write your test specs
 
 Using your component identifiers, write your spec functions. We suggest saving
-these in a spec folder, naming them something like `./specs/AppSpec.js`.
+these in a `cavy` folder in your app's top level directory - i.e. `./cavy/itSpecs.js`.
 
 ```javascript
-export default function(spec) {
-  spec.describe('My feature', function() {
-    spec.it('works', async function() {
-      await spec.fillIn('Scene.TextInput', 'some string')
-      await spec.press('Scene.button');
-      await spec.exists('NextScene')
+export function navigateToEmployeeList(spec) {
+  spec.describe('Navigate from details to employee list', function() {
+    spec.it('PASS', async function() {
+      await spec.exists('NavBar.LeftButton');
+      await spec.press('NavBar.LeftButton');
+      await spec.pause(500);
+    });
+  }); 
+}
+
+export function inputSearchBar(spec, text) {
+  let description = `Input ${text} to search bar`;
+  spec.describe(description, function() {
+    spec.it('PASS', async function() {
+      await spec.exists('SearchBar.TextInput');
+      await spec.fillIn('SearchBar.TextInput', text);
+      await spec.pause(1000);
     });
   });
 }
+
+export function inputSearchBarClear(spec) {
+  spec.describe('Input text to search bar clear', function() {
+    spec.it('PASS', async function() {
+      await spec.fillIn('SearchBar.TextInput', ' ');
+      await spec.pause(1000);
+    });
+  });
+}
+```
+
+[See below](#available-spec-helpers) for a list of currently available spec
+helper functions.
+
+### Write your test suites
+
+Now, assemble your test suites with reusable  We suggest saving
+these in a spec folder, naming them something like `./cavy/itSuites.js`.
+
+```javascript
+import * as itSpec from './itSpecs.js';
+
+// TEST VARIABLES //
+
+const TEST_EMPLOYEE = 'AnupGupta';
+const SEARCH = 'Anup';
+const TEST_EMPLOYEE2 = 'AmyTaylor';
+const SEARCH2 = 'Amy';
+
+// TEST SUITES //
+
+export const filterEmployeeList = (spec) => {
+  spec.suite('Verify Anup and search Amy', () => {
+    itSpec.presenceEmployeeListItem(spec, TEST_EMPLOYEE);
+    itSpec.presenceEmployeeListItem(spec, TEST_EMPLOYEE2);
+    itSpec.inputSearchBar(spec, SEARCH2);
+    itSpec.notPresenceEmployeeListItem(spec, TEST_EMPLOYEE);
+    itSpec.presenceEmployeeListItem(spec, TEST_EMPLOYEE2);
+    itSpec.inputSearchBar(spec, ' ');
+  });
+};
 ```
 
 [See below](#available-spec-helpers) for a list of currently available spec
@@ -154,23 +207,65 @@ Optional props:
                       each test e.g. to remove a logged in user.
                       Set to `false` by default.
 
+`consoleLog`        - Optional/tristate: determine level of console feedback
+                      false: no console.log statements
+                      true: some console.log statements
+                      'verbose': detailed console.log statements
+`reporter `         - Optional, boolean: generates XUNIT test report and sends
+                     results to a local server running on a Jenkins host.
+                      
+
+
 ```javascript
 import React, { Component } from 'react';
 import { Tester, TestHookStore } from 'cavy';
-import AppSpec from './specs/AppSpec';
-import App from './app';
+import { Provider } from 'react-redux';
 
-const testHookStore = new TestHookStore();
+import App from 'App/app';
+
+import GLOBAL from 'Helpers/Globals';
+import { setupStore } from 'Store/setup';
+
+const store = setupStore();
+
+if (GLOBAL.TEST_ENABLED) {
+  var testHookStore = new TestHookStore();
+  var TestSuites = require('specs/itSuites.js');
+  console.ignoredYellowBox = [''];
+
+  var testSuitesArray = [TestSuites.filterEmployeeList, TestSuites.tapAndEmail];
+
+  var testHookStore = new TestHookStore();
+}
 
 export default class AppWrapper extends Component {
   render() {
-    return (
-      <Tester specs={[AppSpec]} store={testHookStore} waitTime={4000}>
-        <App />
-      </Tester>
-    );
+    if (GLOBAL.TEST_ENABLED) {
+      return (
+        <Provider store={store}>
+          <Tester
+            suites={testSuitesArray}
+            store={testHookStore}
+            waitTime={4000}
+            consoleLog={true}
+            reporter={true}
+            reRender={true}
+            reduxStore={store}
+          >
+            <App />
+          </Tester>
+        </Provider>
+      );
+    } else {
+      return (
+        <Provider store={store}>
+          <App />
+        </Provider>
+      );
+    }
   }
 }
+
 ```
 
 **Congratulations! You are now all set up to start testing your app with Cavy.**
@@ -214,6 +309,11 @@ should be used if your testable component does not respond to either
 picker = await spec.findComponent('Scene.modalPicker');
 picker.open();
 ```
+
+`dispatchToStore` 	- Function, exposes redux store dispatch method to test
+						  specs and suites.
+
+`getCurrentStore`	- Function, returns state of current redux store. 
 
 ## FAQs
 
