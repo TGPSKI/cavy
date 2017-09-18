@@ -26,6 +26,11 @@ import { View } from 'react-native';
 //                         false: no console.log statements
 //                         true: some console.log statements
 //                         'verbose': detailed console.log statements
+// reporter          - Optional, boolean: generates XUNIT test report and sends
+//                     results to a local server running on a Jenkins host.
+// reduxStore        - Optional, object: pass through a handle to the app
+//                     redux store, exposing dispatchToStore and getCurrentStore
+//                     to each test spec
 // Example
 //
 //   import { Tester, TestHookStore } from 'cavy';
@@ -42,15 +47,19 @@ import { View } from 'react-native';
 //     render() {
 //       if (GLOBAL.TEST_ENABLED) {
 //         return (
-//           <Tester
-//             suites={testSuitesArray}
-//             store={testHookStore}
-//             waitTime={2000}
-//             testStartDelay={1000}
-//             consoleLog={true} // {false}, {true}, 'verbose'
-//           >
-//              <App />
-//           </Tester>
+//           <Provider store={store}>
+//             <Tester
+//               suites={testSuitesArray}
+//               store={testHookStore}
+//               waitTime={2000}
+//               testStartDelay={1000}
+//               consoleLog={true} // {false}, {true}, 'verbose'
+//               reporter={true}
+//               reduxStore={store}
+//             >
+//               <App />
+//             </Tester>
+//           </Provider>
 //         );
 //       } else {
 //         return (<App />);
@@ -76,12 +85,14 @@ export default class Tester extends Component {
   }
 
   async runTests() {
-    const { suites, waitTime, testStartDelay, consoleLog } = this.props;
+    const { suites, waitTime, testStartDelay, consoleLog, reporter, reduxStore } = this.props;
 
     let testOptions = {
       waitTime: waitTime,
       testStartDelay: testStartDelay,
-      consoleLog: consoleLog
+      consoleLog: consoleLog,
+      reporter: reporter,
+      reduxStore: reduxStore
     };
 
     scope = new TestScope(this, testOptions);
@@ -121,7 +132,9 @@ Tester.propTypes = {
   waitTime: PropTypes.number,
   clearAsyncStorage: PropTypes.bool,
   testStartDelay: PropTypes.number,
-  consoleLog: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
+  consoleLog: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  reporter: PropTypes.bool,
+  reduxStore: PropTypes.oneOfType([PropTypes.object, PropTypes.bool])
 };
 
 Tester.childContextTypes = {
@@ -132,5 +145,7 @@ Tester.defaultProps = {
   waitTime: 2000,
   clearAsyncStorage: false,
   testStartDelay: false,
-  consoleLog: true
+  consoleLog: true,
+  reporter: false,
+  reduxStore: false
 };
