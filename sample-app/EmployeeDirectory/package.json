@@ -13,7 +13,7 @@
   "devDependencies": {
     "babel-jest": "18.0.0",
     "babel-preset-react-native": "1.9.1",
-    "cavy": "git://github.com/TGPSKI/cavy.git#f61db71e18f7c160fa7b76486a0f63725e629710",
+    "cavy": "git://github.com/TGPSKI/cavy.git#tgpski-redux-form",
     "jest": "18.1.0",
     "lodash": "^4.17.4",
     "react-test-renderer": "~15.4.0"
