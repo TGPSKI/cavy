@@ -1,4 +1,5 @@
 import createReactClass from 'create-react-class';
+import hook from './hook.js';
 
 // Public: Wrap a stateless (purely functional) component in a non-stateless
 // component so that a `ref` can be added.
@@ -24,23 +25,27 @@ import createReactClass from 'create-react-class';
 //       // ...
 //     }
 //   }
-export default function wrap(statelessComponent) {
-  var reactClass = {}
+export default function wrap(statelessComponent, enableTesting = true) {
+  if (enableTesting) {
+    var reactClass = {};
 
-  Object.keys(statelessComponent).forEach(function (key) {
-    reactClass[key] = statelessComponent[key];
-  });
+    Object.keys(statelessComponent).forEach(function(key) {
+      reactClass[key] = statelessComponent[key];
+    });
 
-  if (statelessComponent.defaultProps) {
-    reactClass.getDefaultProps = function() {
-      return statelessComponent.defaultProps;
+    if (statelessComponent.defaultProps) {
+      reactClass.getDefaultProps = function() {
+        return statelessComponent.defaultProps;
+      };
     }
+
+    reactClass.displayName = statelessComponent.name || statelessComponent.displayName;
+    reactClass.render = function() {
+      return statelessComponent(this.props, this.context);
+    };
+
+    return hook(createReactClass(reactClass), enableTesting);
+  } else {
+    return statelessComponent;
   }
-
-  reactClass.displayName = statelessComponent.name || statelessComponent.displayName;
-  reactClass.render = function() {
-    return statelessComponent(this.props, this.context);
-  };
-
-  return createReactClass(reactClass);
 }
