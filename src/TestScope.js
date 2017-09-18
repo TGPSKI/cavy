@@ -357,15 +357,27 @@ export default class TestScope {
     throw new Error(`Component with identifier ${identifier} was present`);
   }
 
+  // Public: If testing an app with a Redux Store, dispatchToStore exposes
+  // the dispatch method to test specs. Very useful wit hredux middleware
+  // such as redux-form, allowing tests to change form textwith stateless
+  // <Field /> components.
+  //
+  // action - Action to dispatch to the store reducer.
   dispatchToStore(action) {
     if (this.reduxStore) {
       this.reduxStore.dispatch(action);
     }
   }
 
+  // Public: If testing an app with a Redux Store, getCurrentStore exposes
+  // the getCurrentState method to test specs. Can be used to verify
+  // state after integration test actions, like navigating, submitting forms,
+  // and many other use cases.
+  //
+  // action - Action to dispatch to the store reducer.
   getCurrentStore() {
     if (this.reduxStore) {
-      return this.reduxStore.getCurrentState();
+      return this.reduxStore.getState();
     }
   }
 }
