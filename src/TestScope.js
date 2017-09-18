@@ -1,5 +1,7 @@
 import { has, omit } from 'lodash';
 
+import { reporter, postTestResults } from 'Reporting/Reporter';
+
 // Internal: Wrapper around an app being tested, and a bunch of test cases.
 //
 // The TestScope also includes all the functions available when writing your
@@ -18,9 +20,11 @@ export default class TestScope {
     this.testHooks = component.testHookStore;
     this.testSuites = {};
 
-    this.waitTime = testOptions.waitTime;
-    this.testStartDelay = testOptions.testStartDelay;
-    this.consoleLog = testOptions.consoleLog;
+    this.waitTime = testOptions && testOptions.waitTime;
+    this.testStartDelay = testOptions && testOptions.testStartDelay;
+    this.consoleLog = testOptions && testOptions.consoleLog;
+    this.reporter = testOptions && testOptions.reporter ? true : false;
+    this.reduxStore = testOptions && testOptions.reduxStore;
 
     this.run.bind(this);
   }
@@ -129,6 +133,16 @@ export default class TestScope {
 
     this._handleConsoleLog('Cavy tests finished at ' + finish);
     this._handleConsoleLog(this.testSuites);
+
+    if (this.reporter) {
+      let report = reporter(this.testSuites);
+      if (report) {
+        postTestResults && postTestResults(testReport, this.notifier);
+        this._handleConsoleLog('Report sent to notification server.');
+      } else {
+        this._handleConsoleLog('Error sending report.', false, true);
+      }
+    }
   }
 
   // Internal: Handle reporting to console based on consoleLog prop
@@ -341,5 +355,17 @@ export default class TestScope {
       throw e;
     }
     throw new Error(`Component with identifier ${identifier} was present`);
+  }
+
+  dispatchToStore(action) {
+    if (this.reduxStore) {
+      this.reduxStore.dispatch(action);
+    }
+  }
+
+  getCurrentStore() {
+    if (this.reduxStore) {
+      return this.reduxStore.getCurrentState();
+    }
   }
 }
