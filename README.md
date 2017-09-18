@@ -2,7 +2,7 @@
 
 ![Cavy logo](https://cloud.githubusercontent.com/assets/126989/22546798/6cf18938-e936-11e6-933f-da756b9ee7b8.png)
 
-**Cavy-suites** is a cross-platform integration test framework for React Native, forked from Cavy (by [Pixie Labs](http://pixielabs.io)) with additions by [TGPSKI](https://github.com/tgpski). Cavy-suites adds additional functionality to Cavy, including test suites, configurable logging, test reporting, jenkins integration, and redux store support.
+**Cavy-suites** is a cross-platform integration test framework for React Native, forked from Cavy (by [Pixie Labs](http://pixielabs.io)) with additions by [TGPSKI](https://github.com/tgpski). Cavy-suites adds additional functionality to Cavy, including test suites, configurable logging, test reporting, jenkins integration, and react-redux support.
 
 ## How does it work?
 
@@ -13,13 +13,13 @@ which uses a simulated renderer, Cavy runs within your live application as it
 is running on a host device (e.g. your Android or iOS simulator). This allows you to do far more accurate integration testing than if you run
 your React app within a simulated rendering environment.
 
+## Cavy-suites motivation
+
+Cavy is an amazing package, and major props must be given to the team @[Pixie Labs](http://pixielabs.io) . For our use case - testing a complicated production app - we needed more functionality than the base Cavy package provides at the time of writing. If you are new to testing with Cavy, I recommend you start with the mainline Cavy package to learn the fundamentals before exploring cavy-suites.
+
 Cavy-suites introduces test suites to Cavy. The user creates low-level spec functions, like pressing a button in the nav bar, or inputting text in a form. Then the developer assembles specs into groups called suites. Each suite will run tests on a specific portion of the app, reusing as much spec code as possible, while enabling flexibility for tests.
 
 Cavy-suites also adds [react-redux](https://github.com/reactjs/react-redux) integration, giving test specs access to `dispatch()` and `getState()` functions. Developers can create tests that compare the redux state to expected state after interacting with the app. Developers can also dispatch actions to the app reducer, allowing for interaction with popular middlewares like [redux-form](https://github.com/erikras/redux-form). 
-
-## Cavy-suites motivation
-
-Cavy is an amazing package, and major props must be given to the team @[Pixie Labs](http://pixielabs.io) . For our use case - testing a complicated production app - we needed more functionality than the base Cavy package provides at the time of writing.
 
 ### Specs vs. Suites
 
@@ -36,35 +36,84 @@ Reports are generated in app in JSON format, then sent to a listening reporting 
 
 ### Global test disable
 
+Using a Globals.js file, devs can create a global disable function that allows cavy-suite testing code to coexist with prod deployments. We use the `TEST_ENABLED` flag in three locations to support global test disable:
+
+* Conditional assignments for testing variables in index.ios.js
+
+```javascript
+if (GLOBAL.TEST_ENABLED) {
+  var testHookStore = new TestHookStore();
+  var TestSuites = require('specs/itSuites.js');
+  console.ignoredYellowBox = [''];
+  var testSuitesArray = [TestSuites.filterEmployeeList, TestSuites.tapAndEmail];
+  var testHookStore = new TestHookStore();
+}
 ...
+render() {
+    if (GLOBAL.TEST_ENABLED) {
+      return (
+        <Provider store={store}>
+          <Tester
+            suites={testSuitesArray}
+            store={testHookStore}
+            waitTime={1000}
+            testStartDelay={1000}
+            consoleLog={true}
+            reporter={true}
+            reduxStore={store}
+          >
+            <EmployeeDirectoryApp />
+          </Tester>
+        </Provider>
+      );
+    } else {
+      return (
+        <Provider store={store}>
+          <EmployeeDirectoryApp />
+        </Provider>
+      );
+    }
+  }
+```
+
+* Ternary operators in ref assignments 
+
+```javascript
+ref={GLOBAL.TEST_ENABLED ? this.props.generateTestHook('NavBar.LeftButton') : 'LeftButton'}
+```
+
+* Add enableTesting flags to hook and wrap methods, 
+* Wrap returns hook(wrap(Component)) vs. mainline Cavy => wrap(Component)
+
+```javascript
+import { hook, wrap } from 'cavy';
+...<MyStatelessComponent />
+export const Stateless = wrap(MyStatelessComponent, GLOBAL.TEST_ENABLED);
+```
 
 ### Redux integration
 
-...
+If you use Redux in your application, accessing state and dispatching actions in test suites/specs enables a host of new testing possibilities.
 
-## Cavy's components
+Cavy-suites accepts the `reduxStore` prop to the Tester component, exposing 2 new spec helpers, `dispatchToStore(action)` and `getCurrentStore()`.
 
-Cavy provides 3 tools to let you run integration tests:
+getCurrentStore is useful for comparing redux state to expected values after integration test actions.
 
-1. A store of 'test hooks'; key-value pairs between a string identifier and a
-   component somewhere in your app component tree.
-2. A set of helper functions to write spec files.
-3. A `<Tester>` component you wrap around your entire app to make the test hook
-   store available, and autorun your test cases on boot.
+dispatchToStore is useful for any middleware or other redux integrations that need actions dispatched to the app reducer. For example, we use `dispatchToStore(action)` with `redux-form` to modify form values.
 
 ## Installation
 
 To get started using Cavy-suites, install it using `yarn`:
 
-    yarn add -D git://github.com/TGPSKI/cavy.git#tgpski-redux-form
+    yarn add -D git://github.com/TGPSKI/cavy.git#cavy-suites
 
 or `npm`:
 
-    npm i --save-dev git://github.com/TGPSKI/cavy.git#tgpski-redux-form
+    npm i --save-dev git://github.com/TGPSKI/cavy.git#cavy-suites
 
-## Basic usage
+## Usage
 
-Check out [the sample app](https://github.com/tgpski/cavy/tree/tgpski-redux-form/sample-app/EmployeeDirectory) for example usage.
+Check out [the sample app](https://github.com/tgpski/cavy/tree/cavy-suites/sample-app/EmployeeDirectory) for example usage.
 
 ### Hook up components for testing
 
@@ -83,7 +132,9 @@ import React, { Component } from 'react';
 import { TextInput } from 'react-native';
 import { FuncComponent } from 'somewhere';
 
-import { hook, wrap } from 'cavy';
+import { hook } from 'cavy';
+
+import GLOBAL from 'Helpers/Globals.js';
 
 class Scene extends Component {
   render() {
@@ -91,11 +142,15 @@ class Scene extends Component {
     return (
       <View>
         <TextInput
-          ref={this.props.generateTestHook('Scene.TextInput')}
+          ref={GLOBAL.TEST_ENABLED ? 
+          	this.props.generateTestHook('Scene.TextInput') : 
+          	'Scene.TextInput'}
           onChangeText={...}
         />
         <WrappedComponent
-          ref={this.props.generateTestHook('Scene.Component')}
+          ref={GLOBAL.TEST_ENABLED ?
+          	this.props.generateTestHook('Scene.Component') :
+          	'Scene.Component'}
           onPress={...}
         />
       </View>      
@@ -103,7 +158,7 @@ class Scene extends Component {
   }
 }
 
-const TestableScene = hook(Scene);
+const TestableScene = hook(Scene, GLOBAL.TEST_ENABLED);
 export default TestableScene;
 ```
 
@@ -261,9 +316,9 @@ export default class AppWrapper extends Component {
 
 ```
 
-**Congratulations! You are now all set up to start testing your app with Cavy.**
+#### Run your tests!
 
-Your tests will run automatically when you run your app.
+Set `TEST_ENABLED = true;` in Globals.js && refresh your simulator.
 
 #### Apps that use native code
 
@@ -312,8 +367,14 @@ picker.open();
 
 #### How do I disable testing?
 
+Set `TEST_ENABLED = false;` in Globals.js && refresh your simulator.
+
 #### How about supporting stateless components?
 
+* Import wrap => `import {wrap} from 'cavy';`
+* Wrap your Stateless Component => `export default wrap(myComponent, GLOBAL.TEST_ENABLED)`
+* Use ternary ref assignment => `ref={GLOBAL.TEST_ENABLED ? this.props.generateTestHook('NavBar.LeftButton') : null}`
+	* __important note:__ to avoid errors with assigning refs to stateless components, ensure `ref === null` when testing is disabled 
 
 ## Contributing
 
