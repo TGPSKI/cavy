@@ -1,49 +1,49 @@
 import React, { Component } from 'react';
-import {AppRegistry} from 'react-native';
-
+import { AppRegistry } from 'react-native';
+import { Provider } from 'react-redux';
+import { reduxForm } from 'redux-form';
 import { Tester, TestHookStore } from 'cavy';
 
-import EmployeeDirectoryApp from './app/EmployeeDirectoryApp';
+import EmployeeDirectoryApp from 'App/EmployeeDirectoryApp';
 
-import GLOBAL from './app/helpers/globals.js';
+import GLOBAL from 'Helpers/globals.js';
 
 if (GLOBAL.TEST_ENABLED) {
   var testHookStore = new TestHookStore();
-  var testSuites = require('./specs/itSuites.js');
+  var testSuites = require('Specs/itSuites.js');
   var testSuitesArray = [testSuites.filterEmployeeList, testSuites.tapAndEmail];
 }
 
+const { store } = () => {
+  return { form: reduxForm() };
+};
+
 class AppWrapper extends Component {
   render() {
-<<<<<<< HEAD
-    return (
-      <Tester specs={[EmployeeListSpec]} store={testHookStore} waitTime={1000} startDelay={3000}>
-        <EmployeeDirectoryApp />
-      </Tester>
-    );
-||||||| parent of 4a0cbb7... sample-app: show new suite imports, test disable, new props
-    return (
-      <Tester specs={[EmployeeListSpec]} store={testHookStore} waitTime={1000}>
-        <EmployeeDirectoryApp />
-      </Tester>
-    );
-=======
     if (GLOBAL.TEST_ENABLED) {
       return (
-        <Tester 
-          suites={testSuitesArray} 
-          store={testHookStore} 
-          waitTime={1000}
-          testStartDelay={1000}
-          consoleLog={true} // {false}, {true}, 'verbose'
-        >
-          <EmployeeDirectoryApp />
-        </Tester>
+        <Provider store={store}>
+          <Tester
+            suites={testSuitesArray}
+            store={testHookStore}
+            waitTime={1000}
+            testStartDelay={1000}
+            consoleLog={true}
+            reporter={true}
+            reRender={true}
+            reduxStore={store}
+          >
+            <EmployeeDirectoryApp />
+          </Tester>
+        </Provider>
       );
     } else {
-      return (<EmployeeDirectoryApp />);
+      return (
+        <Provider store={store}>
+          <EmployeeDirectoryApp />
+        </Provider>
+      );
     }
->>>>>>> 4a0cbb7... sample-app: show new suite imports, test disable, new props
   }
 }
 
