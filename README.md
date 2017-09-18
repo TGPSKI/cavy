@@ -10,29 +10,39 @@ Cavy (ab)uses React `ref` generating functions to give you the ability to refer
 to, and simulate actions upon, deeply nested components within your
 application. Unlike a tool like [enzyme](https://github.com/airbnb/enzyme)
 which uses a simulated renderer, Cavy runs within your live application as it
-is running on a host device (e.g. your Android or iOS simulator). 
-
-This allows you to do far more accurate integration testing than if you run
+is running on a host device (e.g. your Android or iOS simulator). This allows you to do far more accurate integration testing than if you run
 your React app within a simulated rendering environment.
 
 Cavy-suites introduces test suites to Cavy. The user creates low-level spec functions, like pressing a button in the nav bar, or inputting text in a form. Then the developer assembles specs into groups called suites. Each suite will run tests on a specific portion of the app, reusing as much spec code as possible, while enabling flexibility for tests.
 
-Cavy-suites adds integration with redux, giving test specs access to `dispatch()` and `getState()` functions. Developers can create tests that compare the redux state to expected state after interacting with the app. Developers can also dispatch actions to the app reducer, allowing for integration with popular middlewares like [redux-form](https://github.com/erikras/redux-form).
+Cavy-suites also adds [react-redux](https://github.com/reactjs/react-redux) integration, giving test specs access to `dispatch()` and `getState()` functions. Developers can create tests that compare the redux state to expected state after interacting with the app. Developers can also dispatch actions to the app reducer, allowing for interaction with popular middlewares like [redux-form](https://github.com/erikras/redux-form). 
 
-### Where does it fit in?
+## Cavy-suites motivation
 
-We built Cavy because, at the time of writing, React Native had only a handful
-of testing approaches available:
+Cavy is an amazing package, and major props must be given to the team @[Pixie Labs](http://pixielabs.io) . For our use case - testing a complicated production app - we needed more functionality than the base Cavy package provides at the time of writing.
 
-1. Unit testing components ([Jest](https://github.com/facebook/jest)).
-2. Shallow-render testing components ([enzyme](https://github.com/airbnb/enzyme)).
-3. Testing within your native environment, using native JS hooks ([Appium](http://appium.io/)).
-4. Testing completely within your native environment ([XCTest](https://developer.apple.com/reference/xctest)).
+### Specs vs. Suites
 
-Cavy fits in between shallow-render testing and testing within your native
-environment.
+In mainline Cavy, there is only one level of abstraction related to writing tests - specs. We saw a need for two levels:
 
-### Cavy's components
+* __Specs:__ reusable, parameterizable, oft-repeated actions (filling out a form with input variables, navigating from one page to the next, etc.)
+* __Suites:__ groups of parameterized specs that address separate parts of the app, while adhering to DRY
+
+### Jenkins reporting
+
+Cavy-suites adds the `reporter` prop to the `Tester` component, as well as reporter functions which generate test reports in XUnit format. This allows a dev to build Cavy-suites integration testing into their existing CI flow. 
+
+Reports are generated in app in JSON format, then sent to a listening reporting server running on the Jenkins node. Users can handle reporting in multiple ways (save to file, post test results). We currently use the reporting server to save the test report output to the server, and have Jenkins configured to wait for the presence / !presence of the test results file to post results.
+
+### Global test disable
+
+...
+
+### Redux integration
+
+...
+
+## Cavy's components
 
 Cavy provides 3 tools to let you run integration tests:
 
@@ -54,9 +64,7 @@ or `npm`:
 
 ## Basic usage
 
-Check out [the sample app](https://github.com/tgpski/cavy/tree/tgpski-redux-form/sample-app/EmployeeDirectory) for example usage. Here it is running:
-
-![Sample app running](https://cloud.githubusercontent.com/assets/126989/22829358/193b5c0a-ef9a-11e6-994e-d4df852a6181.gif)
+Check out [the sample app](https://github.com/tgpski/cavy/tree/tgpski-redux-form/sample-app/EmployeeDirectory) for example usage.
 
 ### Hook up components for testing
 
@@ -197,11 +205,10 @@ Optional props:
                       false: no console.log statements
                       true: some console.log statements
                       'verbose': detailed console.log statements
-`reporter `         - Optional, boolean: generates XUNIT test report and sends
-                     results to a local server running on a Jenkins host.
                       
-
-
+`reporter `         - Optional, boolean: generates XUnit test report and sends
+                      results to a local server running on a Jenkins host.
+                      
 ```javascript
 import React, { Component } from 'react';
 import { Tester, TestHookStore } from 'cavy';
@@ -296,47 +303,22 @@ picker = await spec.findComponent('Scene.modalPicker');
 picker.open();
 ```
 
-`dispatchToStore` 	- Function, exposes redux store dispatch method to test
-						  specs and suites.
+`dispatchToStore(action)` 	- exposes redux store dispatch method to test
+						  specs and suites. Pass in an action to send to your app's reducer.
 
-`getCurrentStore`	- Function, returns state of current redux store. 
+`getCurrentStore()`	- returns state of current redux store. Useful for verifying state after interactions handled by Cavy.
 
 ## FAQs
 
-#### How does Cavy compare to Appium? What is the benefit?
-
-Cavy is a comparable tool to Appium. The key difference is that Appium uses
-native hooks to access components (accessibility IDs), wheras Cavy uses React
-Native refs. This means that Cavy sits directly within your React Native
-environment (working identically with both Android and iOS builds), making it
-easy to integrate into your application very quickly, without much
-overhead.
-
-#### What does this allow me to do that Jest does not?
-
-Jest is a useful tool for unit testing individual React Native components,
-whereas Cavy is an integration testing tool allowing you to run end-to-end user
-interface tests.
+#### How do I disable testing?
 
 #### How about supporting stateless components?
 
-We'd love for Cavy to be better compatible with stateless functional components
-and would be more than happy to see its reliance on refs replaced with something
-better suited to the task...
-What that looks like specifically, we're not 100% sure yet. We're very happy to
-discuss possible alternatives!
 
 ## Contributing
 
-- Check out the latest master to make sure the feature hasn't been implemented
-  or the bug hasn't been fixed yet.
-- Check out the issue tracker to make sure someone already hasn't requested it
-  and/or contributed it.
-- Fork the project.
-- Start a feature/bugfix branch.
-- Commit and push until you are happy with your contribution.
-- Please try not to mess with the package.json, version, or history. If you
-  want to have your own version, or is otherwise necessary, that is fine, but
-  please isolate to its own commit so we can cherry-pick around it.
+- This is a fork of Cavy by Pixie Labs, therefore the codebase will diverge, especially related to additional functionality provided by Cavy-suites.
+- Feel free to create your own branch off of TGPSKI:cavy#cavy-suites & propose PRs.
+- If you want to contribute to mainline Cavy, please fork from pixielabs/cavy!
 
 [crna]: https://github.com/react-community/create-react-native-app
