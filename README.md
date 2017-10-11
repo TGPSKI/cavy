@@ -2,12 +2,11 @@
 
 ![Cavy logo](https://cloud.githubusercontent.com/assets/126989/22546798/6cf18938-e936-11e6-933f-da756b9ee7b8.png)
 
-**Cavy-suites** is a cross-platform integration test framework for React Native, forked from Cavy (by [Pixie Labs](http://pixielabs.io)) with additions by [TGPSKI](https://github.com/tgpski). Cavy-suites adds additional functionality to Cavy, including test suites, configurable logging, test reporting, jenkins integration, and react-redux support.
+**Cavy-suites** is a cross-platform integration test framework for React Native, forked from Cavy (by [Pixie Labs](http://pixielabs.io)) with additions by [TGPSKI](https://github.com/tgpski). Cavy-suites adds additional functionality to Cavy, including test suites, configurable logging, CI support, global test disable, and `react-redux` support. 
 
 ## How does it work?
 
-Cavy (ab)uses React `ref` generating functions to give you the ability to refer
-to, and simulate actions upon, deeply nested components within your
+Cavy (ab)uses React `ref` generating functions to reference and simulate actions upon deeply nested components in your
 application. Unlike a tool like [enzyme](https://github.com/airbnb/enzyme)
 which uses a simulated renderer, Cavy runs within your live application as it
 is running on a host device (e.g. your Android or iOS simulator). This allows you to do far more accurate integration testing than if you run
@@ -15,24 +14,64 @@ your React app within a simulated rendering environment.
 
 ## Cavy-suites motivation
 
-Cavy is an amazing package, and major props must be given to the team @[Pixie Labs](http://pixielabs.io) . For our use case - testing a complicated production app - we needed more functionality than the base Cavy package provides at the time of writing. If you are new to testing with Cavy, I recommend you start with the mainline Cavy package to learn the fundamentals before exploring cavy-suites.
-
-Cavy-suites introduces test suites to Cavy. The user creates low-level spec functions, like pressing a button in the nav bar, or inputting text in a form. Then the developer assembles specs into groups called suites. Each suite will run tests on a specific portion of the app, reusing as much spec code as possible, while enabling flexibility for tests.
-
-Cavy-suites also adds [react-redux](https://github.com/reactjs/react-redux) integration, giving test specs access to `dispatch()` and `getState()` functions. Developers can create tests that compare the redux state to expected state after interacting with the app. Developers can also dispatch actions to the app reducer, allowing for interaction with popular middlewares like [redux-form](https://github.com/erikras/redux-form). 
+Cavy-suites introduces test suites, configurable logging, continuous integration support, global test disable, and `react-redux` support. 
 
 ### Specs vs. Suites
 
-In mainline Cavy, there is only one level of abstraction related to writing tests - specs. We saw a need for two levels:
+__Specs:__ reusable, parameterizable, oft-repeated actions (filling out a form with input variables, navigating from one page to the next)
 
-* __Specs:__ reusable, parameterizable, oft-repeated actions (filling out a form with input variables, navigating from one page to the next, etc.)
-* __Suites:__ groups of parameterized specs that address separate parts of the app, while adhering to DRY
+In this `spec` function, we create a parameterized test which inputs arbitrary text into the SearchBar TextInput field.
 
-### Jenkins reporting
+```javascript
+export function inputSearchBar(spec, text) {
+  let description = `Input ${text} to search bar`;
+  spec.describe(description, function() {
+    spec.it('PASS', async function() {
+      await spec.exists('SearchBar.TextInput');
+      await spec.fillIn('SearchBar.TextInput', text);
+      await spec.pause(1000);
+    });
+  });
+}
+```
 
-Cavy-suites adds the `reporter` prop to the `Tester` component, as well as reporter functions which generate test reports in XUnit format. This allows a dev to build Cavy-suites integration testing into their existing CI flow. 
+__Suites:__ groups of parameterized specs that address separate parts of the app, while adhering to DRY
 
-Reports are generated in app in JSON format, then sent to a listening reporting server running on the Jenkins node. Users can handle reporting in multiple ways (save to file, post test results). We currently use the reporting server to save the test report output to the server, and have Jenkins configured to wait for the presence / !presence of the test results file to post results.
+In this `suite` funciton, we create a test suite composed of parameterized test specs. Here, we use the inputSearchBar function with two different input variables.
+
+```javascript
+export const filterEmployeeList = (spec) => {
+  spec.suite('Verify Anup and search Amy', () => {
+    itSpec.presenceEmployeeListItem(spec, TEST_EMPLOYEE);
+    itSpec.presenceEmployeeListItem(spec, TEST_EMPLOYEE2);
+    itSpec.inputSearchBar(spec, SEARCH2);
+    itSpec.notPresenceEmployeeListItem(spec, TEST_EMPLOYEE);
+    itSpec.presenceEmployeeListItem(spec, TEST_EMPLOYEE2);
+    itSpec.inputSearchBar(spec, ' ');
+  });
+};
+```
+
+### Configurable Logging
+
+Cavy-suites adds the `consoleLog` prop to the Tester component. 
+
+```
+Optional/tristate: determine level of console feedback
+                        false:     no console.log reporting
+                        true:      some console.log reporting
+                        'verbose': detailed console.log reporting, including test start/stop,
+                         		     suite start/stop, and spec start/stop 
+```
+
+<img src="./doc/console_log_reporting.png" width=375>
+<img src="./doc/console_log_reporting_2.png" width=375>
+
+### Continuous Integration Support
+
+Cavy-suites adds the `reporter` prop to the `Tester` component, as well as reporter functions which generate test reports in XUnit format. This allows developers to build Cavy-suites integration testing into their existing CI toolchain. 
+
+Reports are generated in app in JSON format, then sent to a listening reporting server running on the CI node. Users can handle reporting in multiple ways (save to file, post test results). We currently use the reporting server to save the test report output to the server, and have Jenkins configured to wait for the presence / !presence of the test results file to post results.
 
 ### Global test disable
 
@@ -90,16 +129,17 @@ import { hook, wrap } from 'cavy';
 ...<MyStatelessComponent />
 export const Stateless = wrap(MyStatelessComponent, GLOBAL.TEST_ENABLED);
 ```
-
 ### Redux integration
 
 If you use Redux in your application, accessing state and dispatching actions in test suites/specs enables a host of new testing possibilities.
+
+Cavy-suites includes [react-redux](https://github.com/reactjs/react-redux) integration, giving test specs access to `dispatch()` and `getState()` functions. Developers can create tests that compare the redux state to expected state during cavy integration tests.
 
 Cavy-suites accepts the `reduxStore` prop to the Tester component, exposing 2 new spec helpers, `dispatchToStore(action)` and `getCurrentStore()`.
 
 getCurrentStore is useful for comparing redux state to expected values after integration test actions.
 
-dispatchToStore is useful for any middleware or other redux integrations that need actions dispatched to the app reducer. For example, we use `dispatchToStore(action)` with `redux-form` to modify form values.
+dispatchToStore is useful for any middleware or other redux integrations that need actions dispatched to the app reducer. For example, we use `dispatchToStore(action)` with [redux-form](https://github.com/erikras/redux-form) to modify form values.
 
 ## Installation
 
