@@ -1,4 +1,4 @@
-const XUnitReport = testResults => {
+export const XUnitReport = testResults => {
   let testCaseToXML = (suiteName, testName, testCase) => {
     var passed = testCase.expected == testCase.actual;
     var xml = '    <testcase classname="' + suiteName + '" name="' + testName + '"';
@@ -21,14 +21,10 @@ const XUnitReport = testResults => {
   };
 
   let testSuiteToXML = (suiteName, suite) => {
-    let xml = '  <testsuite tests="' + numTests.toString() + '">\n';
-    let tests = Object.keys(suite);
-
-    tests.forEach(test => {
-      xml += testCaseToXML(suiteName, test, suite[test]);
-    });
-
+    var numTests = Object.keys(suite).length;
+    var xml = '  <testsuite tests="' + numTests.toString() + '">\n';
     for (var testName in suite) {
+      xml += testCaseToXML(suiteName, testName, suite[testName]);
     }
     xml += '  </testsuite>\n';
     return xml;
@@ -36,21 +32,18 @@ const XUnitReport = testResults => {
 
   let jsonToXUnit = results => {
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n';
-    let { suites } = results.tests;
-    let suiteNames = Object.keys(suites);
+    let suiteNames = Object.keys(results);
     suiteNames &&
       suiteNames.forEach(suite => {
-        xml += testSuiteToXML(suite, suites[suite]);
+        xml += testSuiteToXML(suite, results[suite]);
       });
     xml += '</testsuites>\n';
     return xml;
-    a;
   };
 
-  return jsonToXUnit(testResults);
+  const report = jsonToXUnit(testResults);
+  return report;
 };
-
-export const reporter = XUnitReport;
 
 export const postTestResults = (
   testResultXML,
@@ -60,11 +53,9 @@ export const postTestResults = (
     headers: { 'Content-Type': 'application/xml' }
   }
 ) => {
-
   const headers = new Headers({
-      ...params.headers
-    });
-  }
+    ...params.headers
+  });
 
   const body = {
     testResult: testResultXML
