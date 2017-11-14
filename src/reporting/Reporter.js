@@ -44,26 +44,36 @@ const XUnitReport = testResults => {
       });
     xml += '</testsuites>\n';
     return xml;
+    a;
   };
 
-  let xunit = jsonToXUnit(testResults);
+  return jsonToXUnit(testResults);
 };
 
 export const reporter = XUnitReport;
 
-export const postTestResults = (testResultJSON, params) => {
+export const postTestResults = (
+  testResultXML,
+  params = {
+    url: 'http://localhost:3003/jenkins',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/xml' }
+  }
+) => {
+
   const headers = new Headers({
-    ...params.headers
-  });
+      ...params.headers
+    });
+  }
 
   const body = {
-    testResult: testResultJSON
+    testResult: testResultXML
   };
 
   const requestParams = {
     method: params.method,
     headers: headers || undefined,
-    body: JSON.stringify(body)
+    body: body
   };
 
   return fetch(params.url, requestParams)
