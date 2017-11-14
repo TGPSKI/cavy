@@ -23,7 +23,7 @@ import TestHookStore from './TestHookStore';
 //   export default TestableMyComponent;
 //
 // Returns the new component.
-export default function hook(WrappedComponent, enableTesting = true) {
+export default function hook(WrappedComponent, enableTesting = false) {
   if (enableTesting) {
     const wrapperComponent = class extends Component {
       constructor(props, context) {
