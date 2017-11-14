@@ -1,6 +1,6 @@
 {
-  "name": "cavy-suites",
-  "version": "0.4.1",
+  "name": "cavy",
+  "version": "0.4.2",
   "description": "An integration test framework for React Native.",
   "main": "index.js",
   "scripts": {
