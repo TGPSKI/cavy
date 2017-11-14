@@ -137,7 +137,7 @@ export default class TestScope {
     if (this.reporter) {
       let report = reporter(this.testSuites);
       if (report) {
-        postTestResults && postTestResults(testReport, this.notifier);
+        postTestResults && postTestResults(report, this.notifier);
         this._handleConsoleLog('Report sent to notification server.');
       } else {
         this._handleConsoleLog('Error sending report.', false, true);
