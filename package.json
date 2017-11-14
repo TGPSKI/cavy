@@ -1,5 +1,5 @@
 {
-  "name": "cavy",
+  "name": "cavy-suites",
   "version": "0.4.1",
   "description": "An integration test framework for React Native.",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pixielabs/cavy.git"
+    "url": "git+https://github.com/tgpski/cavy.git#cavy-suites"
   },
   "keywords": [
     "react",
@@ -21,18 +21,18 @@
     "specs"
   ],
   "peerDependencies": {
-    "react-native": "0.40.x"
+    "react-native": "^0.48.0"
   },
-  "author": "Pixie Labs",
+  "author": "Cavy by Pixie Labs, Fork by TGPSKI",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pixielabs/cavy/issues"
+    "url": "https://github.com/tgpski/cavy/issues"
   },
-  "homepage": "https://github.com/pixielabs/cavy#readme",
+  "homepage": "https://github.com/tgpski/cavy#readme",
   "devDependencies": {
     "lodash": "^4.17.4"
   },
-  "homepage": "https://github.com/pixielabs/cavy#readme",
+  "homepage": "https://github.com/tgpski/cavy#readme",
   "dependencies": {
     "prop-types": "^15.5.10",
     "create-react-class": "^15.6.0"
