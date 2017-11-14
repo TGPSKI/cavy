@@ -25,7 +25,7 @@ import hook from './hook.js';
 //       // ...
 //     }
 //   }
-export default function wrap(statelessComponent, enableTesting = true) {
+export default function wrap(statelessComponent, enableTesting = false) {
   if (enableTesting) {
     var reactClass = {};
 
