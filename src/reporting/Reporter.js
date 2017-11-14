@@ -46,7 +46,7 @@ const XUnitReport = testResults => {
     return xml;
   };
 
-  let xunit = jsonToXunit(testResults);
+  let xunit = jsonToXUnit(testResults);
 };
 
 export const reporter = XUnitReport;
