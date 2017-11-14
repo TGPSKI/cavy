@@ -1,6 +1,6 @@
 import { has, omit } from 'lodash';
 
-import { reporter, postTestResults } from './reporting/Reporter';
+import { XUnitReport, postTestResults } from './reporting/Reporter';
 
 // Internal: Wrapper around an app being tested, and a bunch of test cases.
 //
@@ -135,7 +135,7 @@ export default class TestScope {
     this._handleConsoleLog(this.testSuites);
 
     if (this.reporter) {
-      postTestResults && postTestResults(this.testSuites, this.notifier);
+      postTestResults && postTestResults(XUnitReport(this.testSuites));
       this._handleConsoleLog('Report sent to notification server.');
     } else {
       this._handleConsoleLog('Error sending report.', false, true);
