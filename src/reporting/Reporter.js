@@ -45,29 +45,32 @@ export const XUnitReport = testResults => {
   return report;
 };
 
-export const postTestResults = (
-  testResultXML,
-  params = {
-    url: 'http://localhost:3003/jenkins',
-    method: 'POST',
-    headers: { 'Content-Type': 'application/xml' }
-  }
-) => {
+export const postTestResults = (testResultXML, params = {}) => {
+  let configuredParams = Object.assign(
+    {},
+    {
+      url: 'http://localhost:3003/jenkins',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      testDeviceIdentifier: 'default'
+    },
+    params
+  );
+
   const headers = new Headers({
-    ...params.headers
+    ...configuredParams.headers
   });
 
-  const body = {
-    testResult: testResultXML
-  };
-
   const requestParams = {
-    method: params.method,
+    method: configuredParams.method,
     headers: headers || undefined,
-    body: body
+    body: JSON.stringify({
+      testResult: testResultXML,
+      testDeviceIdentifier: configuredParams.testDeviceIdentifier
+    })
   };
 
-  return fetch(params.url, requestParams)
+  return fetch(configuredParams.url, requestParams)
     .then(response => response.text())
     .then(responseData => {
       console.log('responseData', responseData);
