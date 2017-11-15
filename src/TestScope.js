@@ -20,11 +20,14 @@ export default class TestScope {
     this.testHooks = component.testHookStore;
     this.testSuites = {};
 
-    this.waitTime = testOptions && testOptions.waitTime;
-    this.testStartDelay = testOptions && testOptions.testStartDelay;
-    this.consoleLog = testOptions && testOptions.consoleLog;
-    this.reporter = testOptions && testOptions.reporter ? true : false;
-    this.reduxStore = testOptions && testOptions.reduxStore;
+    this.waitTime = testOptions.waitTime;
+    this.testStartDelay = testOptions.testStartDelay;
+    this.consoleLog = testOptions.consoleLog;
+
+    this.reduxStore = testOptions.reduxStore;
+
+    this.reporter = testOptions.reporter ? true : false;
+    this.reporterParams = testOptions.reporterParams ? testOptions.reporterParams : null;
 
     this.run.bind(this);
   }
@@ -135,7 +138,8 @@ export default class TestScope {
     this._handleConsoleLog(this.testSuites);
 
     if (this.reporter) {
-      postTestResults && postTestResults(XUnitReport(this.testSuites));
+      let XUnitOut = XUnitReport(this.testSuites);
+      postTestResults(XUnitOut, this.reporterParams);
       this._handleConsoleLog('Report sent to notification server.');
     } else {
       this._handleConsoleLog('Error sending report.', false, true);
