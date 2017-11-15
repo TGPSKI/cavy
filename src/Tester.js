@@ -28,6 +28,8 @@ import { View } from 'react-native';
 //                         'verbose': detailed console.log statements
 // reporter          - Optional, boolean: generates XUNIT test report and sends
 //                     results to a local server running on a Jenkins host.
+// reporterParams    - Optional, object: defines reporter post URL, formatting, and provides
+//                     unique device info for on-device unit testing
 // reduxStore        - Optional, object: pass through a handle to the app
 //                     redux store, exposing dispatchToStore and getCurrentStore
 //                     to each test spec
@@ -85,13 +87,22 @@ export default class Tester extends Component {
   }
 
   async runTests() {
-    const { suites, waitTime, testStartDelay, consoleLog, reporter, reduxStore } = this.props;
+    const {
+      suites,
+      waitTime,
+      testStartDelay,
+      consoleLog,
+      reporter,
+      reporterParams,
+      reduxStore
+    } = this.props;
 
     let testOptions = {
       waitTime: waitTime,
       testStartDelay: testStartDelay,
       consoleLog: consoleLog,
       reporter: reporter,
+      reporterParams: reporterParams,
       reduxStore: reduxStore
     };
 
@@ -134,6 +145,7 @@ Tester.propTypes = {
   testStartDelay: PropTypes.number,
   consoleLog: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   reporter: PropTypes.bool,
+  reporterParams: PropTypes.object,
   reduxStore: PropTypes.oneOfType([PropTypes.object, PropTypes.bool])
 };
 
@@ -147,5 +159,6 @@ Tester.defaultProps = {
   testStartDelay: false,
   consoleLog: true,
   reporter: false,
+  reporterParams: null,
   reduxStore: false
 };
